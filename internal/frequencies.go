@@ -22,7 +22,7 @@ func NewFrequencyArray(r io.Reader) (*FrequencyArray, error) {
 	fa := &FrequencyArray{}
 	br := bufio.NewReader(r)
 	b, err := br.ReadByte()
-	for ; err != nil; b, err = br.ReadByte() {
+	for ; err == nil; b, err = br.ReadByte() {
 		fa.byteFrequency[b]++
 		fa.totalCount++
 	}
