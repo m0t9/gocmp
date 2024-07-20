@@ -31,7 +31,7 @@ func TestMemoryBitBuffer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			bb := NewMemoryBitBuffer()
 			for _, bit := range tt.bits {
-				bb.AddBit(bit)
+				bb.AddBits(bit)
 			}
 			if bb.Len() != len(tt.bits) {
 				t.Fatalf("Expected written number of bits differ from got: expected %d, got %d",
@@ -76,9 +76,7 @@ func TestMemoryBitBufferWriteRead(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f, _ := os.CreateTemp(td, tt.name)
 			var bb BitBuffer = NewMemoryBitBuffer()
-			for _, b := range tt.bits {
-				bb.AddBit(b)
-			}
+			bb.AddBits(tt.bits...)
 			if err := bb.WriteTo(f); err != nil {
 				t.Fatalf("Unexpected error %s during writing memory bit buffer to file", err)
 			}

@@ -168,11 +168,11 @@ func TestForest_FindTwoWithMinFrequency(t *testing.T) {
 			m1: &struct {
 				frequency uint64
 				char      byte
-			}{frequency: 2, char: 'b'},
+			}{frequency: 2, char: 'a'},
 			m2: &struct {
 				frequency uint64
 				char      byte
-			}{frequency: 2, char: 'a'},
+			}{frequency: 2, char: 'b'},
 		},
 		{
 			name:  "NoSecondMin",
@@ -181,6 +181,18 @@ func TestForest_FindTwoWithMinFrequency(t *testing.T) {
 				frequency uint64
 				char      byte
 			}{frequency: 5, char: 'a'},
+		},
+		{
+			name:  "WikiTest",
+			input: "aaaaaaaaaaaaaaabbbbbbbccccccddddddeeeee",
+			m1: &struct {
+				frequency uint64
+				char      byte
+			}{frequency: 5, char: 'e'},
+			m2: &struct {
+				frequency uint64
+				char      byte
+			}{frequency: 6, char: 'c'},
 		},
 		{
 			name:  "NoMin",

@@ -1,8 +1,9 @@
 package internal
 
-type HuffmanEncoderDecoder interface {
-	CharEncoding(char byte) []bool
-}
+import (
+	"encoding/binary"
+	"io"
+)
 
 type HuffmanNode struct {
 	left   int16
@@ -11,8 +12,41 @@ type HuffmanNode struct {
 	char   byte
 }
 
+func readNewHuffmanNode(r io.Reader) (*HuffmanNode, error) {
+	node := &HuffmanNode{}
+	if err := binary.Read(r, binary.LittleEndian, &node.left); err != nil {
+		return nil, err
+	}
+	if err := binary.Read(r, binary.LittleEndian, &node.right); err != nil {
+		return nil, err
+	}
+	if err := binary.Read(r, binary.LittleEndian, &node.parent); err != nil {
+		return nil, err
+	}
+	if err := binary.Read(r, binary.LittleEndian, &node.char); err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
 func (hn *HuffmanNode) isLeaf() bool {
 	return hn.left == hn.right && hn.left == -1
+}
+
+func (hn *HuffmanNode) writeTo(w io.Writer) error {
+	if err := binary.Write(w, binary.LittleEndian, hn.left); err != nil {
+		return err
+	}
+	if err := binary.Write(w, binary.LittleEndian, hn.right); err != nil {
+		return err
+	}
+	if err := binary.Write(w, binary.LittleEndian, hn.parent); err != nil {
+		return err
+	}
+	if err := binary.Write(w, binary.LittleEndian, hn.char); err != nil {
+		return err
+	}
+	return nil
 }
 
 type HuffmanTree struct {
@@ -20,8 +54,16 @@ type HuffmanTree struct {
 	nodeEncodings [BytesCount][]bool
 }
 
+func (ht *HuffmanTree) getNode(idx int) *HuffmanNode {
+	return &ht.nodes[idx]
+}
+
+func (ht *HuffmanTree) root() *HuffmanNode {
+	return ht.getNode(len(ht.nodes) - 1)
+}
+
 func (ht *HuffmanTree) buildEncodings() {
-	ht.encodingDfs(&ht.nodes[len(ht.nodes)-1], nil)
+	ht.encodingDfs(ht.root(), nil)
 }
 
 func (ht *HuffmanTree) encodingDfs(node *HuffmanNode, encoding []bool) {
@@ -79,4 +121,32 @@ func (ht *HuffmanTree) CharEncoding(char byte) []bool {
 	return ht.nodeEncodings[char]
 }
 
-var _ HuffmanEncoderDecoder = &HuffmanTree{}
+func (ht *HuffmanTree) WriteTo(w io.Writer) error {
+	tsz := int16(len(ht.nodes))
+	if err := binary.Write(w, binary.LittleEndian, tsz); err != nil {
+		return err
+	}
+	for _, node := range ht.nodes {
+		if err := node.writeTo(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ReadNewHuffmanTree(r io.Reader) (*HuffmanTree, error) {
+	var tsz int16
+	if err := binary.Read(r, binary.LittleEndian, &tsz); err != nil {
+		return nil, err
+	}
+	ht := &HuffmanTree{nodes: make([]HuffmanNode, tsz)}
+	for i := int16(0); i < tsz; i++ {
+		if nodePtr, err := readNewHuffmanNode(r); err == nil {
+			ht.nodes[i] = *nodePtr
+		} else {
+			return nil, err
+		}
+	}
+	ht.buildEncodings()
+	return ht, nil
+}

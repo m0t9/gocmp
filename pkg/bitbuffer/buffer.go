@@ -10,7 +10,7 @@ const ByteSize = 8
 
 type BitBuffer interface {
 	At(int) (bool, error)
-	AddBit(bool)
+	AddBits(...bool)
 	Len() int
 	WriteTo(io.Writer) error
 }
@@ -50,11 +50,13 @@ func byteToBoolSlice(b byte) []bool {
 	return bits
 }
 
-func (mbb *MemoryBitBuffer) AddBit(b bool) {
-	mbb.lastByte = append(mbb.lastByte, b)
-	if len(mbb.lastByte) == ByteSize {
-		mbb.buffer = append(mbb.buffer, boolSliceToByte(mbb.lastByte))
-		mbb.lastByte = mbb.lastByte[:0]
+func (mbb *MemoryBitBuffer) AddBits(bs ...bool) {
+	for _, b := range bs {
+		mbb.lastByte = append(mbb.lastByte, b)
+		if len(mbb.lastByte) == ByteSize {
+			mbb.buffer = append(mbb.buffer, boolSliceToByte(mbb.lastByte))
+			mbb.lastByte = mbb.lastByte[:0]
+		}
 	}
 }
 
