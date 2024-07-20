@@ -1,10 +1,18 @@
 package internal
 
+type HuffmanEncoderDecoder interface {
+	CharEncoding(char byte) []bool
+}
+
 type HuffmanNode struct {
 	left   int16
 	right  int16
 	parent int16
 	char   byte
+}
+
+func (hn *HuffmanNode) isLeaf() bool {
+	return hn.left == hn.right && hn.left == -1
 }
 
 type HuffmanTree struct {
@@ -18,7 +26,7 @@ func (ht *HuffmanTree) buildEncodings() {
 
 func (ht *HuffmanTree) encodingDfs(node *HuffmanNode, encoding []bool) {
 	if node.left == node.right && node.left == -1 {
-		ht.nodeEncodings[node.char] = make([]bool, 0, len(encoding))
+		ht.nodeEncodings[node.char] = make([]bool, len(encoding))
 		copy(ht.nodeEncodings[node.char], encoding)
 		return
 	}
@@ -47,14 +55,15 @@ func NewHuffmanTree(f *Forest) *HuffmanTree {
 
 	for ; f.Size() > 1; f.PopTree() {
 		m1, m2 := f.FindTwoWithMinFrequency()
+		newRoot := int16(len(ht.nodes))
+		ht.nodes[m1.root].parent = newRoot
+		ht.nodes[m2.root].parent = newRoot
+
 		ht.nodes = append(ht.nodes, HuffmanNode{
 			left:   m1.root,
 			right:  m2.root,
 			parent: -1,
 		})
-		newRoot := int16(len(ht.nodes) - 1)
-		ht.nodes[m1.root].parent = newRoot
-		ht.nodes[m2.root].parent = newRoot
 
 		m1.frequency += m2.frequency
 		m1.root = newRoot
@@ -65,3 +74,9 @@ func NewHuffmanTree(f *Forest) *HuffmanTree {
 	ht.buildEncodings()
 	return ht
 }
+
+func (ht *HuffmanTree) CharEncoding(char byte) []bool {
+	return ht.nodeEncodings[char]
+}
+
+var _ HuffmanEncoderDecoder = &HuffmanTree{}

@@ -72,8 +72,8 @@ func (f *Forest) FindTwoWithMinFrequency() (*ForestTree, *ForestTree) {
 	var m1, m2 *ForestTree
 	for i := 0; i < f.Size(); i++ {
 		if m1 == nil || m1.frequency >= f.trees[i].frequency {
-			m1 = &f.trees[i]
 			m2 = m1
+			m1 = &f.trees[i]
 		} else if m2 == nil || m2.frequency >= f.trees[i].frequency {
 			m2 = &f.trees[i]
 		}

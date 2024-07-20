@@ -140,3 +140,79 @@ func TestNewForest(t *testing.T) {
 		})
 	}
 }
+
+func TestForest_FindTwoWithMinFrequency(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		input  string
+		m1, m2 *struct {
+			frequency uint64
+			char      byte
+		}
+	}{
+		{
+			name:  "UsualString",
+			input: "abacaba",
+			m1: &struct {
+				frequency uint64
+				char      byte
+			}{frequency: 1, char: 'c'},
+			m2: &struct {
+				frequency uint64
+				char      byte
+			}{frequency: 2, char: 'b'},
+		},
+		{
+			name:  "EquallyMinimal",
+			input: "bbaaccc",
+			m1: &struct {
+				frequency uint64
+				char      byte
+			}{frequency: 2, char: 'b'},
+			m2: &struct {
+				frequency uint64
+				char      byte
+			}{frequency: 2, char: 'a'},
+		},
+		{
+			name:  "NoSecondMin",
+			input: "aaaaa",
+			m1: &struct {
+				frequency uint64
+				char      byte
+			}{frequency: 5, char: 'a'},
+		},
+		{
+			name:  "NoMin",
+			input: "",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			fa, err := NewFrequencyArray(strings.NewReader(tt.input))
+			if err != nil {
+				t.Fatalf("Unexpected error at FA building: %s", err)
+			}
+			f := NewForest(fa)
+			m1, m2 := f.FindTwoWithMinFrequency()
+			m1notExistence := (tt.m1 == nil && m1 != nil) || (tt.m1 != nil && m1 == nil)
+			m2notExistence := (tt.m2 == nil && m2 != nil) || (tt.m2 != nil && m2 == nil)
+			if m1notExistence || m2notExistence {
+				t.Fatalf(
+					"Problems with minimal values pointers existence: m1 %p, m2 %p, but expected m1 %p, m2 %p",
+					m1, m2, tt.m1, tt.m2)
+			}
+			if m1 != nil && (m1.frequency != tt.m1.frequency || m1.char != tt.m1.char) {
+				t.Errorf("First minimum expected value differs.\n"+
+					"Frequency = %d, Expected frequency = %d\n"+
+					"Character = %c, Expected character = %c",
+					m1.frequency, tt.m1.frequency, m1.char, tt.m1.char)
+			}
+			if m2 != nil && (m2.frequency != tt.m2.frequency || m2.char != tt.m2.char) {
+				t.Errorf("Second minimum expected value differs.\n"+
+					"Frequency = %d, Expected frequency = %d\n"+
+					"Character = %c, Expected character = %c",
+					m2.frequency, tt.m2.frequency, m2.char, tt.m2.char)
+			}
+		})
+	}
+}
