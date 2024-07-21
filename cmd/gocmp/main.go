@@ -6,9 +6,9 @@ import (
 	"go-compressor/internal"
 	"os"
 	"path/filepath"
+	"runtime/pprof"
+	"time"
 )
-
-const ext = ".gocmp"
 
 const (
 	msgArgsMissing          = "(⁎˃ᆺ˂) source and (or) destination files are missing\n"
@@ -19,11 +19,24 @@ const (
 	msgCompressionSuccess   = "(=^ ◡ ^=) successfully compressed to file '%s'\n"
 	msgDecompressionSuccess = "(=^ ◡ ^=) successfully decompressed to file '%s'\n"
 	msgCompressionRate      = "( ^..^)ﾉ  compression rate is %.2f\n"
+	msgRuntime              = "(^･o･^)ﾉ  gocmp running time is %s\n"
+)
+
+var (
+	cpuprofile     = flag.String("cpuprofile", "", "write cpu profile to this file")
+	decompressMode = flag.Bool("d", false, "enable decompression mode")
 )
 
 func main() {
-	decompressMode := flag.Bool("d", false, "enable decompression mode")
 	flag.Parse()
+
+	// debugging features
+	if *cpuprofile != "" {
+		cpuf, _ := os.Create(*cpuprofile)
+		pprof.StartCPUProfile(cpuf)
+		defer cpuf.Close()
+		defer pprof.StopCPUProfile()
+	}
 
 	args := flag.Args()
 	if len(args) != 2 {
@@ -49,8 +62,9 @@ func main() {
 		os.Exit(-1)
 	}
 
-	enc := internal.NewHuffmanMemoryEncoderDecoder()
+	enc := internal.NewHuffmanEncoderDecoder()
 
+	startTime := time.Now()
 	if *decompressMode {
 		if err = enc.Decode(inf, outf); err != nil {
 			fmt.Printf(msgDecompressionFailed, err)
@@ -71,4 +85,6 @@ func main() {
 			fmt.Printf(msgCompressionRate, float64(infStat.Size())/float64(outfStat.Size()))
 		}
 	}
+	finishTime := time.Now()
+	fmt.Printf(msgRuntime, finishTime.Sub(startTime))
 }

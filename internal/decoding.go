@@ -6,6 +6,8 @@ import (
 	"io"
 )
 
+const BufferSize = 1 << 16
+
 type Encoder interface {
 	Encode(io.ReadSeeker, io.Writer) error
 }
@@ -19,27 +21,28 @@ type EncoderDecoder interface {
 	Decoder
 }
 
-type HuffmanMemoryEncoderDecoder struct {
+type HuffmanEncoderDecoder struct {
 }
 
-func NewHuffmanMemoryEncoderDecoder() *HuffmanMemoryEncoderDecoder {
-	return &HuffmanMemoryEncoderDecoder{}
+func NewHuffmanEncoderDecoder() *HuffmanEncoderDecoder {
+	return &HuffmanEncoderDecoder{}
 }
 
-func (hmed *HuffmanMemoryEncoderDecoder) Encode(r io.ReadSeeker, w io.Writer) error {
+func (hmed *HuffmanEncoderDecoder) Encode(r io.ReadSeeker, w io.Writer) error {
+	bw := bufio.NewWriterSize(w, BufferSize)
 	fa, err := newFrequencyArray(r)
 	if err != nil {
 		return err
 	}
 	f := newForest(fa)
 	ht := newHuffmanTree(f)
-	if err := ht.writeTo(w); err != nil {
+	if err := ht.writeTo(bw); err != nil {
 		return err
 	}
 	if _, err = r.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
-	br := bufio.NewReader(r)
+	br := bufio.NewReaderSize(r, BufferSize)
 	mbb := bitbuffer.NewMemoryBitBuffer()
 	for b, err := br.ReadByte(); err == nil; b, err = br.ReadByte() {
 		mbb.AddBits(ht.charEncoding(b)...)
@@ -47,23 +50,26 @@ func (hmed *HuffmanMemoryEncoderDecoder) Encode(r io.ReadSeeker, w io.Writer) er
 	if err != nil {
 		return err
 	}
-	return mbb.WriteTo(w)
+	if err := mbb.WriteTo(bw); err != nil {
+		return err
+	}
+	return bw.Flush()
 }
 
-func (hmed *HuffmanMemoryEncoderDecoder) Decode(r io.Reader, w io.Writer) error {
+func (hmed *HuffmanEncoderDecoder) Decode(r io.Reader, w io.Writer) error {
 	ht, err := readNewHuffmanTree(r)
 	if err != nil {
 		return err
 	}
-	mbb, err := bitbuffer.ReadNewMemoryBitBuffer(r)
+	br := bufio.NewReaderSize(r, BufferSize)
+	mbb, err := bitbuffer.ReadNewMemoryBitBuffer(br)
 	if err != nil {
 		return err
 	}
-	bw := bufio.NewWriter(w)
+	bw := bufio.NewWriterSize(w, BufferSize)
 	node := ht.root()
 	var bts []byte
 	for i := 0; i < mbb.Len(); i++ {
-
 		if node.isLeaf() {
 			bts = append(bts, node.char)
 			node = ht.root()
@@ -79,7 +85,7 @@ func (hmed *HuffmanMemoryEncoderDecoder) Decode(r io.Reader, w io.Writer) error 
 	if _, err := bw.Write(bts); err != nil {
 		return err
 	}
-	return nil
+	return bw.Flush()
 }
 
-var _ EncoderDecoder = NewHuffmanMemoryEncoderDecoder()
+var _ EncoderDecoder = NewHuffmanEncoderDecoder()
