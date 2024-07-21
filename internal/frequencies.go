@@ -6,20 +6,20 @@ import (
 	"io"
 )
 
-const BytesCount = 256
+const bytesCount = 256
 
-type FrequencyCounter interface {
-	FrequencyOf(byte) uint64
-	Total() uint64
+type frequencyCounter interface {
+	frequencyOf(byte) uint64
+	total() uint64
 }
 
-type FrequencyArray struct {
-	byteFrequency [BytesCount]uint64
+type frequencyArray struct {
+	byteFrequency [bytesCount]uint64
 	totalCount    uint64
 }
 
-func NewFrequencyArray(r io.Reader) (*FrequencyArray, error) {
-	fa := &FrequencyArray{}
+func newFrequencyArray(r io.Reader) (*frequencyArray, error) {
+	fa := &frequencyArray{}
 	br := bufio.NewReader(r)
 	b, err := br.ReadByte()
 	for ; err == nil; b, err = br.ReadByte() {
@@ -32,34 +32,34 @@ func NewFrequencyArray(r io.Reader) (*FrequencyArray, error) {
 	return fa, nil
 }
 
-func (fa *FrequencyArray) FrequencyOf(b byte) uint64 {
+func (fa *frequencyArray) frequencyOf(b byte) uint64 {
 	return fa.byteFrequency[b]
 }
 
-func (fa *FrequencyArray) Total() uint64 {
+func (fa *frequencyArray) total() uint64 {
 	return fa.totalCount
 }
 
-var _ FrequencyCounter = &FrequencyArray{}
+var _ frequencyCounter = &frequencyArray{}
 
-type ForestTree struct {
+type forestTree struct {
 	frequency uint64
 	root      int16
 	char      byte
 }
 
-type Forest struct {
-	trees []ForestTree
+type forest struct {
+	trees []forestTree
 }
 
-func NewForest(fc FrequencyCounter) *Forest {
-	f := &Forest{
-		trees: make([]ForestTree, 0, BytesCount),
+func newForest(fc frequencyCounter) *forest {
+	f := &forest{
+		trees: make([]forestTree, 0, bytesCount),
 	}
-	for b := 0; b < BytesCount; b++ {
-		if fc.FrequencyOf(byte(b)) > 0 {
-			f.trees = append(f.trees, ForestTree{
-				frequency: fc.FrequencyOf(byte(b)),
+	for b := 0; b < bytesCount; b++ {
+		if fc.frequencyOf(byte(b)) > 0 {
+			f.trees = append(f.trees, forestTree{
+				frequency: fc.frequencyOf(byte(b)),
 				root:      int16(len(f.trees)),
 				char:      byte(b),
 			})
@@ -68,9 +68,9 @@ func NewForest(fc FrequencyCounter) *Forest {
 	return f
 }
 
-func (f *Forest) FindTwoWithMinFrequency() (*ForestTree, *ForestTree) {
-	var m1, m2 *ForestTree
-	for i := 0; i < f.Size(); i++ {
+func (f *forest) findTwoWithMinFrequency() (*forestTree, *forestTree) {
+	var m1, m2 *forestTree
+	for i := 0; i < f.size(); i++ {
 		if m1 == nil || m1.frequency > f.trees[i].frequency {
 			m2 = m1
 			m1 = &f.trees[i]
@@ -81,12 +81,12 @@ func (f *Forest) FindTwoWithMinFrequency() (*ForestTree, *ForestTree) {
 	return m1, m2
 }
 
-func (f *Forest) Size() int {
+func (f *forest) size() int {
 	return len(f.trees)
 }
 
-func (f *Forest) PopTree() {
-	if f.Size() > 0 {
-		f.trees = f.trees[:f.Size()-1]
+func (f *forest) popTree() {
+	if f.size() > 0 {
+		f.trees = f.trees[:f.size()-1]
 	}
 }

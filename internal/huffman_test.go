@@ -12,14 +12,14 @@ func TestNewHuffmanTree(t *testing.T) {
 	for _, tt := range []struct {
 		name              string
 		input             string
-		expectedTree      HuffmanTree
+		expectedTree      huffmanTree
 		expectedEncodings map[byte][]bool
 	}{
 		{
 			name:  "UsualInput",
 			input: "abacaba",
-			expectedTree: HuffmanTree{
-				nodes: []HuffmanNode{
+			expectedTree: huffmanTree{
+				nodes: []huffmanNode{
 					{
 						left:   -1,
 						right:  -1,
@@ -59,8 +59,8 @@ func TestNewHuffmanTree(t *testing.T) {
 		{
 			name:  "WikiTest",
 			input: "aaaaaaaaaaaaaaabbbbbbbccccccddddddeeeee",
-			expectedTree: HuffmanTree{
-				nodes: []HuffmanNode{
+			expectedTree: huffmanTree{
+				nodes: []huffmanNode{
 					{
 						left:   -1,
 						right:  -1,
@@ -123,12 +123,12 @@ func TestNewHuffmanTree(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			fa, err := NewFrequencyArray(strings.NewReader(tt.input))
+			fa, err := newFrequencyArray(strings.NewReader(tt.input))
 			if err != nil {
 				t.Fatalf("Unexpected error during FA building: %s", err)
 			}
-			f := NewForest(fa)
-			tree := NewHuffmanTree(f)
+			f := newForest(fa)
+			tree := newHuffmanTree(f)
 			if len(tree.nodes) != len(tt.expectedTree.nodes) {
 				t.Fatalf("Tree sizes differ: expected %d, got %d", len(tt.expectedTree.nodes), len(tree.nodes))
 			}
@@ -140,7 +140,7 @@ func TestNewHuffmanTree(t *testing.T) {
 				}
 				c := node.char
 				if node.isLeaf() &&
-					!slices.Equal(tt.expectedEncodings[c], tree.CharEncoding(c)) {
+					!slices.Equal(tt.expectedEncodings[c], tree.charEncoding(c)) {
 					t.Errorf("Encodings for `%c` differs: expected %v, got %v", c,
 						tt.expectedEncodings[c], tree.nodeEncodings[c])
 				}
@@ -166,22 +166,22 @@ func TestHuffmanTreeWriteRead(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			src, _ := os.CreateTemp(td, tt.name)
-			fa, err := NewFrequencyArray(strings.NewReader(tt.input))
+			fa, err := newFrequencyArray(strings.NewReader(tt.input))
 			if err != nil {
 				t.Fatalf("Unexpected error during FA building: %s", err)
 			}
-			f := NewForest(fa)
-			tree := NewHuffmanTree(f)
-			if err = tree.WriteTo(src); err != nil {
+			f := newForest(fa)
+			tree := newHuffmanTree(f)
+			if err = tree.writeTo(src); err != nil {
 				t.Fatalf("Unexpected error during HT writing: %s", err)
 			}
 			_, _ = src.Seek(0, io.SeekStart)
-			readTree, err := ReadNewHuffmanTree(src)
+			readTree, err := readNewHuffmanTree(src)
 			if err != nil {
 				t.Fatalf("Unexpected error during HT reading: %s", err)
 			}
 			if len(readTree.nodes) != len(tree.nodes) {
-				t.Fatalf("Size of read HT differs from expected: got %d, expected %d",
+				t.Fatalf("size of read HT differs from expected: got %d, expected %d",
 					len(readTree.nodes), len(tree.nodes))
 			}
 			for i := range readTree.nodes {

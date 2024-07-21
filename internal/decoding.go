@@ -27,13 +27,13 @@ func NewHuffmanMemoryEncoderDecoder() *HuffmanMemoryEncoderDecoder {
 }
 
 func (hmed *HuffmanMemoryEncoderDecoder) Encode(r io.ReadSeeker, w io.Writer) error {
-	fa, err := NewFrequencyArray(r)
+	fa, err := newFrequencyArray(r)
 	if err != nil {
 		return err
 	}
-	f := NewForest(fa)
-	ht := NewHuffmanTree(f)
-	if err := ht.WriteTo(w); err != nil {
+	f := newForest(fa)
+	ht := newHuffmanTree(f)
+	if err := ht.writeTo(w); err != nil {
 		return err
 	}
 	if _, err = r.Seek(0, io.SeekStart); err != nil {
@@ -42,7 +42,7 @@ func (hmed *HuffmanMemoryEncoderDecoder) Encode(r io.ReadSeeker, w io.Writer) er
 	br := bufio.NewReader(r)
 	mbb := bitbuffer.NewMemoryBitBuffer()
 	for b, err := br.ReadByte(); err == nil; b, err = br.ReadByte() {
-		mbb.AddBits(ht.CharEncoding(b)...)
+		mbb.AddBits(ht.charEncoding(b)...)
 	}
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func (hmed *HuffmanMemoryEncoderDecoder) Encode(r io.ReadSeeker, w io.Writer) er
 }
 
 func (hmed *HuffmanMemoryEncoderDecoder) Decode(r io.Reader, w io.Writer) error {
-	ht, err := ReadNewHuffmanTree(r)
+	ht, err := readNewHuffmanTree(r)
 	if err != nil {
 		return err
 	}

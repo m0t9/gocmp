@@ -31,13 +31,13 @@ func TestNewFrequencyArray(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			fa, err := NewFrequencyArray(strings.NewReader(tt.input))
+			fa, err := newFrequencyArray(strings.NewReader(tt.input))
 			if err != nil {
 				t.Fatalf("Unexpected error: %s", err)
 			}
-			for bi := 0; bi < BytesCount; bi++ {
+			for bi := 0; bi < bytesCount; bi++ {
 				b := byte(bi)
-				c := int(fa.FrequencyOf(b))
+				c := int(fa.frequencyOf(b))
 				ec := bytes.Count([]byte(tt.input), []byte{b})
 				if c != ec {
 					t.Errorf("Invalid count of byte `%c`. Expected %d, got %d.",
@@ -52,12 +52,12 @@ func TestNewForest(t *testing.T) {
 	for _, tt := range []struct {
 		name           string
 		input          string
-		expectedForest Forest
+		expectedForest forest
 	}{
 		{
 			name:  "ValidString",
 			input: "justvalidstring",
-			expectedForest: Forest{trees: []ForestTree{
+			expectedForest: forest{trees: []forestTree{
 				{
 					frequency: 1,
 					root:      0,
@@ -122,16 +122,16 @@ func TestNewForest(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			fc, err := NewFrequencyArray(strings.NewReader(tt.input))
+			fc, err := newFrequencyArray(strings.NewReader(tt.input))
 			if err != nil {
 				t.Fatalf("Unexpected error at FA building: %s", err)
 			}
-			forest := NewForest(fc)
-			if forest.Size() != tt.expectedForest.Size() {
+			forest := newForest(fc)
+			if forest.size() != tt.expectedForest.size() {
 				t.Errorf("Expected and got forest sizes differ - %d and %d",
-					tt.expectedForest.Size(), forest.Size())
+					tt.expectedForest.size(), forest.size())
 			}
-			for i := 0; i < forest.Size(); i++ {
+			for i := 0; i < forest.size(); i++ {
 				if forest.trees[i] != tt.expectedForest.trees[i] {
 					t.Errorf("At position %d expected forest tree differs from got one - %+v and %+v",
 						i, tt.expectedForest.trees[i], forest.trees[i])
@@ -200,12 +200,12 @@ func TestForest_FindTwoWithMinFrequency(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			fa, err := NewFrequencyArray(strings.NewReader(tt.input))
+			fa, err := newFrequencyArray(strings.NewReader(tt.input))
 			if err != nil {
 				t.Fatalf("Unexpected error at FA building: %s", err)
 			}
-			f := NewForest(fa)
-			m1, m2 := f.FindTwoWithMinFrequency()
+			f := newForest(fa)
+			m1, m2 := f.findTwoWithMinFrequency()
 			m1notExistence := (tt.m1 == nil && m1 != nil) || (tt.m1 != nil && m1 == nil)
 			m2notExistence := (tt.m2 == nil && m2 != nil) || (tt.m2 != nil && m2 == nil)
 			if m1notExistence || m2notExistence {

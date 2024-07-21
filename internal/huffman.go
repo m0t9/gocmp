@@ -5,15 +5,15 @@ import (
 	"io"
 )
 
-type HuffmanNode struct {
+type huffmanNode struct {
 	left   int16
 	right  int16
 	parent int16
 	char   byte
 }
 
-func readNewHuffmanNode(r io.Reader) (*HuffmanNode, error) {
-	node := &HuffmanNode{}
+func readNewHuffmanNode(r io.Reader) (*huffmanNode, error) {
+	node := &huffmanNode{}
 	if err := binary.Read(r, binary.LittleEndian, &node.left); err != nil {
 		return nil, err
 	}
@@ -29,11 +29,11 @@ func readNewHuffmanNode(r io.Reader) (*HuffmanNode, error) {
 	return node, nil
 }
 
-func (hn *HuffmanNode) isLeaf() bool {
+func (hn *huffmanNode) isLeaf() bool {
 	return hn.left == hn.right && hn.left == -1
 }
 
-func (hn *HuffmanNode) writeTo(w io.Writer) error {
+func (hn *huffmanNode) writeTo(w io.Writer) error {
 	if err := binary.Write(w, binary.LittleEndian, hn.left); err != nil {
 		return err
 	}
@@ -49,24 +49,24 @@ func (hn *HuffmanNode) writeTo(w io.Writer) error {
 	return nil
 }
 
-type HuffmanTree struct {
-	nodes         []HuffmanNode
-	nodeEncodings [BytesCount][]bool
+type huffmanTree struct {
+	nodes         []huffmanNode
+	nodeEncodings [bytesCount][]bool
 }
 
-func (ht *HuffmanTree) getNode(idx int) *HuffmanNode {
+func (ht *huffmanTree) getNode(idx int) *huffmanNode {
 	return &ht.nodes[idx]
 }
 
-func (ht *HuffmanTree) root() *HuffmanNode {
+func (ht *huffmanTree) root() *huffmanNode {
 	return ht.getNode(len(ht.nodes) - 1)
 }
 
-func (ht *HuffmanTree) buildEncodings() {
+func (ht *huffmanTree) buildEncodings() {
 	ht.encodingDfs(ht.root(), nil)
 }
 
-func (ht *HuffmanTree) encodingDfs(node *HuffmanNode, encoding []bool) {
+func (ht *huffmanTree) encodingDfs(node *huffmanNode, encoding []bool) {
 	if node.left == node.right && node.left == -1 {
 		ht.nodeEncodings[node.char] = make([]bool, len(encoding))
 		copy(ht.nodeEncodings[node.char], encoding)
@@ -84,10 +84,10 @@ func (ht *HuffmanTree) encodingDfs(node *HuffmanNode, encoding []bool) {
 	}
 }
 
-func NewHuffmanTree(f *Forest) *HuffmanTree {
-	ht := &HuffmanTree{nodes: make([]HuffmanNode, 0, f.Size())}
+func newHuffmanTree(f *forest) *huffmanTree {
+	ht := &huffmanTree{nodes: make([]huffmanNode, 0, f.size())}
 	for _, t := range f.trees {
-		ht.nodes = append(ht.nodes, HuffmanNode{
+		ht.nodes = append(ht.nodes, huffmanNode{
 			left:   -1,
 			right:  -1,
 			parent: -1,
@@ -95,13 +95,13 @@ func NewHuffmanTree(f *Forest) *HuffmanTree {
 		})
 	}
 
-	for ; f.Size() > 1; f.PopTree() {
-		m1, m2 := f.FindTwoWithMinFrequency()
+	for ; f.size() > 1; f.popTree() {
+		m1, m2 := f.findTwoWithMinFrequency()
 		newRoot := int16(len(ht.nodes))
 		ht.nodes[m1.root].parent = newRoot
 		ht.nodes[m2.root].parent = newRoot
 
-		ht.nodes = append(ht.nodes, HuffmanNode{
+		ht.nodes = append(ht.nodes, huffmanNode{
 			left:   m1.root,
 			right:  m2.root,
 			parent: -1,
@@ -110,18 +110,18 @@ func NewHuffmanTree(f *Forest) *HuffmanTree {
 		m1.frequency += m2.frequency
 		m1.root = newRoot
 
-		*m2 = f.trees[f.Size()-1]
+		*m2 = f.trees[f.size()-1]
 	}
 
 	ht.buildEncodings()
 	return ht
 }
 
-func (ht *HuffmanTree) CharEncoding(char byte) []bool {
+func (ht *huffmanTree) charEncoding(char byte) []bool {
 	return ht.nodeEncodings[char]
 }
 
-func (ht *HuffmanTree) WriteTo(w io.Writer) error {
+func (ht *huffmanTree) writeTo(w io.Writer) error {
 	tsz := int16(len(ht.nodes))
 	if err := binary.Write(w, binary.LittleEndian, tsz); err != nil {
 		return err
@@ -134,12 +134,12 @@ func (ht *HuffmanTree) WriteTo(w io.Writer) error {
 	return nil
 }
 
-func ReadNewHuffmanTree(r io.Reader) (*HuffmanTree, error) {
+func readNewHuffmanTree(r io.Reader) (*huffmanTree, error) {
 	var tsz int16
 	if err := binary.Read(r, binary.LittleEndian, &tsz); err != nil {
 		return nil, err
 	}
-	ht := &HuffmanTree{nodes: make([]HuffmanNode, tsz)}
+	ht := &huffmanTree{nodes: make([]huffmanNode, tsz)}
 	for i := int16(0); i < tsz; i++ {
 		if nodePtr, err := readNewHuffmanNode(r); err == nil {
 			ht.nodes[i] = *nodePtr
