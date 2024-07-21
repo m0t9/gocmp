@@ -93,6 +93,7 @@ func (mbb *MemoryBitBuffer) WriteTo(w io.Writer) error {
 var _ BitBuffer = &MemoryBitBuffer{}
 
 func ReadNewMemoryBitBuffer(r io.Reader) (*MemoryBitBuffer, error) {
+	// TODO: optimize reading by lazy chunks reading
 	var lastByteSize byte
 	if err := binary.Read(r, binary.LittleEndian, &lastByteSize); err != nil {
 		return nil, err
