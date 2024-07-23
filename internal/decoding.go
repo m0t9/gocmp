@@ -47,9 +47,6 @@ func (hmed *HuffmanEncoderDecoder) Encode(r io.ReadSeeker, w io.Writer) error {
 	for b, err := br.ReadByte(); err == nil; b, err = br.ReadByte() {
 		mbb.AddBits(ht.charEncoding(b)...)
 	}
-	if err != nil {
-		return err
-	}
 	if err := mbb.WriteTo(bw); err != nil {
 		return err
 	}
@@ -70,15 +67,15 @@ func (hmed *HuffmanEncoderDecoder) Decode(r io.Reader, w io.Writer) error {
 	node := ht.root()
 	var bts []byte
 	for i := 0; i < mbb.Len(); i++ {
-		if node.isLeaf() {
-			bts = append(bts, node.char)
-			node = ht.root()
-		}
 		b, _ := mbb.At(i)
 		if !b {
 			node = ht.getNode(int(node.left))
 		} else {
 			node = ht.getNode(int(node.right))
+		}
+		if node.isLeaf() {
+			bts = append(bts, node.char)
+			node = ht.root()
 		}
 	}
 

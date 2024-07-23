@@ -10,6 +10,11 @@ import (
 const TestBufferSize = 1 << 16
 
 func checkFilesEquality(f1, f2 *os.File) bool {
+	f1s, _ := f1.Stat()
+	f2s, _ := f2.Stat()
+	if f1s.Size() != f2s.Size() {
+		return false
+	}
 	_, _ = f1.Seek(0, io.SeekStart)
 	_, _ = f2.Seek(0, io.SeekStart)
 	for {
@@ -47,6 +52,10 @@ func TestHuffmanEncodeDecode(t *testing.T) {
 		{
 			name:           "DoraJPG",
 			fileToCompress: "../test/dora.jpg",
+		},
+		{
+			name:           "WarAndPeaceFB2",
+			fileToCompress: "../test/vim.fb2",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
