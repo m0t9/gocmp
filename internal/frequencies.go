@@ -18,7 +18,7 @@ type frequencyArray struct {
 	totalCount    uint64
 }
 
-func newFrequencyArray(r io.Reader) (*frequencyArray, error) {
+func newFrequencyArray(r io.Reader) (frequencyCounter, error) {
 	fa := &frequencyArray{}
 	br := bufio.NewReader(r)
 	b, err := br.ReadByte()

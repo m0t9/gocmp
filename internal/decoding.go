@@ -2,7 +2,8 @@ package internal
 
 import (
 	"bufio"
-	"go-compressor/pkg/bitbuffer"
+	"encoding/binary"
+	"go-compressor/pkg/bits"
 	"io"
 )
 
@@ -24,7 +25,7 @@ type EncoderDecoder interface {
 type HuffmanEncoderDecoder struct {
 }
 
-func NewHuffmanEncoderDecoder() *HuffmanEncoderDecoder {
+func NewHuffmanEncoderDecoder() EncoderDecoder {
 	return &HuffmanEncoderDecoder{}
 }
 
@@ -43,11 +44,19 @@ func (hmed *HuffmanEncoderDecoder) Encode(r io.ReadSeeker, w io.Writer) error {
 		return err
 	}
 	br := bufio.NewReaderSize(r, BufferSize)
-	mbb := bitbuffer.NewMemoryBitBuffer()
-	for b, err := br.ReadByte(); err == nil; b, err = br.ReadByte() {
-		mbb.AddBits(ht.charEncoding(b)...)
+
+	// write # of bytes in original file
+	if err := binary.Write(bw, binary.LittleEndian, fa.total()); err != nil {
+		return err
 	}
-	if err := mbb.WriteTo(bw); err != nil {
+
+	bitwr := bits.NewBitWriter(bw)
+	for b, err := br.ReadByte(); err == nil; b, err = br.ReadByte() {
+		if err := bitwr.WriteBits(ht.charEncoding(b)...); err != nil {
+			return err
+		}
+	}
+	if err := bitwr.Flush(); err != nil {
 		return err
 	}
 	return bw.Flush()
@@ -59,28 +68,34 @@ func (hmed *HuffmanEncoderDecoder) Decode(r io.Reader, w io.Writer) error {
 		return err
 	}
 	br := bufio.NewReaderSize(r, BufferSize)
-	mbb, err := bitbuffer.ReadNewMemoryBitBuffer(br)
-	if err != nil {
+
+	// read original file size
+	var bytesCnt uint64
+	if err := binary.Read(br, binary.LittleEndian, &bytesCnt); err != nil {
 		return err
 	}
+
 	bw := bufio.NewWriterSize(w, BufferSize)
+	bitr := bits.NewBitReader(br)
 	node := ht.root()
-	var bts []byte
-	for i := 0; i < mbb.Len(); i++ {
-		b, _ := mbb.At(i)
-		if !b {
+
+	var writeBytes uint64
+	for writeBytes < bytesCnt {
+		if b, err := bitr.ReadBit(); err != nil {
+			return err
+		} else if !b {
 			node = ht.getNode(int(node.left))
 		} else {
 			node = ht.getNode(int(node.right))
 		}
-		if node.isLeaf() {
-			bts = append(bts, node.char)
-			node = ht.root()
-		}
-	}
 
-	if _, err := bw.Write(bts); err != nil {
-		return err
+		if node.isLeaf() {
+			if _, err := bw.Write([]byte{node.char}); err != nil {
+				return err
+			}
+			node = ht.root()
+			writeBytes++
+		}
 	}
 	return bw.Flush()
 }
