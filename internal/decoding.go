@@ -100,4 +100,4 @@ func (hmed *HuffmanEncoderDecoder) Decode(r io.Reader, w io.Writer) error {
 	return bw.Flush()
 }
 
-var _ EncoderDecoder = NewHuffmanEncoderDecoder()
+var _ EncoderDecoder = &HuffmanEncoderDecoder{}
