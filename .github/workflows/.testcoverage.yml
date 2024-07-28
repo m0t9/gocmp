@@ -17,5 +17,5 @@ jobs:
           local-prefix: github.com/m0t9/gocmp
           threshold-total: 50
 
-          git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
+          git-token: ${{ github.ref_name == 'master' && secrets.GITHUB_TOKEN || '' }}
           git-branch: badges
