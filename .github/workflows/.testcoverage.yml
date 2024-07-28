@@ -1,19 +1,22 @@
 name: Go test coverage check
 runs-on: ubuntu-latest
 on: [push]
-steps:
-  - uses: actions/checkout@v3
-  - uses: actions/setup-go@v3
 
-  - name: generate test coverage
-    run: go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
+jobs:
+  test:
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
 
-  - name: check test coverage
-    uses: vladopajic/go-test-coverage@v2
-    with:
-      profile: cover.out
-      local-prefix: github.com/m0t9/gocmp
-      threshold-total: 50
+      - name: generate test coverage
+        run: go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
 
-      git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
-      git-branch: badges
+      - name: check test coverage
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          profile: cover.out
+          local-prefix: github.com/m0t9/gocmp
+          threshold-total: 50
+
+          git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
+          git-branch: badges
