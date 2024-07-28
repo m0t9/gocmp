@@ -1,9 +1,8 @@
-name: Go test coverage check
-runs-on: ubuntu-latest
+name: gocmp-coverage
 on: [push]
-
 jobs:
-  test:
+  coverage:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
