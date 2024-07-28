@@ -1,5 +1,6 @@
 name: gocmp-coverage
 on: [push]
+permissions: write-all
 jobs:
   coverage:
     runs-on: ubuntu-latest
